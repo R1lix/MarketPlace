@@ -1,10 +1,9 @@
-namespace Category;
-using Catalog.Domain;
+namespace Catalog.Domain;
 
 public class Category
 {
     public Guid Id { get; private set;}
-    public string? Name { get; private set; } = null!;
+    public string Name { get; private set; } = null!;
 
     // Для EF Core
     private Category() {}
