@@ -1,6 +1,4 @@
-﻿namespace ProducrImage
-{
-using Catalog.Domain;
+﻿using Catalog.Domain;
 public class ProductImage
 {
     public Guid Id { get; private set; }
@@ -38,4 +36,3 @@ public class ProductImage
         SetName(name);
     }
 }    
-}
