@@ -1,4 +1,4 @@
-﻿using Catalog.Domain;
+﻿namespace Catalog.Domain;
 public class ProductImage
 {
     public Guid Id { get; private set; }

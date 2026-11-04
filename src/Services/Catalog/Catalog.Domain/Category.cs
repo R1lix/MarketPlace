@@ -4,10 +4,10 @@ using Catalog.Domain;
 public class Category
 {
     public Guid Id { get; private set;}
-    public string? Name { get; private set; }
+    public string? Name { get; private set; } = null!;
 
     // Для EF Core
-    public Category() {}
+    private Category() {}
 
     public Category(string name) 
     {
