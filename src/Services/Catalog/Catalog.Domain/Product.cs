@@ -1,5 +1,5 @@
 ﻿namespace Catalog.Domain;
-sealed public class Product
+public sealed class Product
 {
     public Guid Id { get; private set; }
     public string Name { get; private set; } = null!;
@@ -10,13 +10,14 @@ sealed public class Product
     public string Sku {  get; private set; } = null!; // Артикул товара
     public DateTime CreatedAt { get; private set;}
     public DateTime? UpdatedAt { get; private set; }
-    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public bool IsDeleted { get; private set; } = false;
     private readonly List<ProductImage> _images = new List<ProductImage>();
     public IReadOnlyCollection<ProductImage> Images => _images;
 
-    private const int MAX_NAME_LENGHT = 200; 
-    private const int MAX_SKU_LENGHT = 50;
-    private const int MAX_DESCRIPTION_LENGHT = 2000;
+    public const int MaxNameLength = 200; 
+    public const int MaxSkuLength = 50;
+    public const int MaxDescriptionLength = 2000;
 
     // Для EF Core
     private Product() { }
@@ -38,9 +39,10 @@ sealed public class Product
     {
         if (string.IsNullOrWhiteSpace(sku))
             throw new DomainException("Артикул товара не может быть пустым");
-        if (sku.Length > MAX_SKU_LENGHT)
-            throw new DomainException($"Длина артикула не может быть больше {MAX_SKU_LENGHT} символов");
+        sku = sku.Trim();
         sku = sku.ToUpperInvariant();
+        if (sku.Length > MaxSkuLength)
+            throw new DomainException($"Длина артикула не может быть больше {MaxSkuLength} символов");
         Sku = sku;
     }
 
@@ -48,8 +50,9 @@ sealed public class Product
     {
         if (!string.IsNullOrWhiteSpace(description))
         {
-            if (description.Length > MAX_DESCRIPTION_LENGHT)
-                throw new DomainException($"Описание товара не должно превышать {MAX_DESCRIPTION_LENGHT} символов");
+            description = description.Trim();
+            if (description.Length > MaxDescriptionLength)
+                throw new DomainException($"Описание товара не должно превышать {MaxDescriptionLength} символов");         
             Description = description;
         }
         else
@@ -69,9 +72,9 @@ sealed public class Product
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Название товара не может быть пустым");
-        if (name.Length > MAX_NAME_LENGHT)
-            throw new DomainException($"Длина названия не может быть больше {MAX_NAME_LENGHT} символов");
         name = name.Trim();
+        if (name.Length > MaxNameLength)
+            throw new DomainException($"Длина названия не может быть больше {MaxNameLength} символов");      
         Name = name;
     }
 
@@ -94,6 +97,7 @@ sealed public class Product
     // Обновление имени товара и его описания
     public void ChangeDetails(string name, string? description)
     {
+        EnsureNotDeleted();
         SetName(name);
         SetDescription(description);
         MarkUpdated();
@@ -101,15 +105,34 @@ sealed public class Product
 
     public void ChangePrice(decimal price)
     {
+        EnsureNotDeleted();
         SetPrice(price);
         MarkUpdated();
     }
 
     // Время обновления вынесено в отдельный метод
     // Перенесети потом в Infrastructure
-    public void MarkUpdated()
+    private void MarkUpdated()
     {
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void Delete()
+    {
+        if (IsDeleted)
+            return;
+        IsDeleted = true;
+        MarkDeletedUpdateAt();
+    }
+
+    private void MarkDeletedUpdateAt()
+    {
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    private void EnsureNotDeleted()
+    {
+        if (IsDeleted)
+            throw new DomainException("Товар удален");
+    }
 }
