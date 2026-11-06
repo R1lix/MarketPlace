@@ -10,7 +10,8 @@ public sealed class Product
     public string Sku {  get; private set; } = null!; // Артикул товара
     public DateTime CreatedAt { get; private set;}
     public DateTime? UpdatedAt { get; private set; }
-    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public bool IsDeleted { get; private set; } = false;
     private readonly List<ProductImage> _images = new List<ProductImage>();
     public IReadOnlyCollection<ProductImage> Images => _images;
 
@@ -49,9 +50,9 @@ public sealed class Product
     {
         if (!string.IsNullOrWhiteSpace(description))
         {
-            if (description.Length > MaxDescriptionLength)
-                throw new DomainException($"Описание товара не должно превышать {MaxDescriptionLength} символов");
             description = description.Trim();
+            if (description.Length > MaxDescriptionLength)
+                throw new DomainException($"Описание товара не должно превышать {MaxDescriptionLength} символов");         
             Description = description;
         }
         else
@@ -96,6 +97,7 @@ public sealed class Product
     // Обновление имени товара и его описания
     public void ChangeDetails(string name, string? description)
     {
+        EnsureNotDeleted();
         SetName(name);
         SetDescription(description);
         MarkUpdated();
@@ -103,6 +105,7 @@ public sealed class Product
 
     public void ChangePrice(decimal price)
     {
+        EnsureNotDeleted();
         SetPrice(price);
         MarkUpdated();
     }
@@ -114,5 +117,22 @@ public sealed class Product
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void Delete()
+    {
+        if (IsDeleted)
+            return;
+        IsDeleted = true;
+        MarkDeletedUpdateAt();
+    }
 
+    private void MarkDeletedUpdateAt()
+    {
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    private void EnsureNotDeleted()
+    {
+        if (IsDeleted)
+            throw new DomainException("Товар удален");
+    }
 }
