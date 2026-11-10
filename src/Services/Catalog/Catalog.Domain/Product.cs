@@ -110,6 +110,33 @@ public sealed class Product
         MarkUpdated();
     }
 
+    public void ChangeCategory(Guid categoryId)
+    {
+        EnsureNotDeleted();
+        SetCategory(categoryId);
+        MarkUpdated();
+    }
+
+    public void AddStock(int stock)
+    {
+        EnsureNotDeleted();
+        if (stock <= 0)
+            throw new DomainException("Количество добавленного товара не может быть меньше либо равно 0");
+        SetStock(Stock + stock);
+        MarkUpdated();
+    }
+
+    public void RemoveStock(int stock)
+    {
+        EnsureNotDeleted();
+        if (stock <= 0)
+            throw new DomainException("Недостаточно товара для списания");
+        if (stock > Stock)
+            throw new DomainException($"Нельзя списать товара больше чем на {Stock} единиц");
+        SetStock(Stock - stock);
+        MarkUpdated();
+    }
+
     // Время обновления вынесено в отдельный метод
     // Перенесети потом в Infrastructure
     private void MarkUpdated()
