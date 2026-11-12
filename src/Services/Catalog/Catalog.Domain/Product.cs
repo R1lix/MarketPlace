@@ -117,23 +117,23 @@ public sealed class Product
         MarkUpdated();
     }
 
-    public void AddStock(int stock)
+    public void AddStock(int quantity)
     {
         EnsureNotDeleted();
-        if (stock <= 0)
+        if (quantity <= 0)
             throw new DomainException("Количество добавленного товара не может быть меньше либо равно 0");
-        SetStock(Stock + stock);
+        SetStock(Stock + quantity);
         MarkUpdated();
     }
 
-    public void RemoveStock(int stock)
+    public void RemoveStock(int quantity)
     {
         EnsureNotDeleted();
-        if (stock <= 0)
+        if (quantity <= 0)
             throw new DomainException("Недостаточно товара для списания");
-        if (stock > Stock)
+        if (quantity > Stock)
             throw new DomainException($"Нельзя списать товара больше чем на {Stock} единиц");
-        SetStock(Stock - stock);
+        SetStock(Stock - quantity);
         MarkUpdated();
     }
 
