@@ -14,5 +14,8 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Id).ValueGeneratedNever();
 
         builder.Property(c => c.Name).HasMaxLength(Category.MaxNameLength).IsRequired();
+
+        // Оптимистическая блокировка через системную колонку xmin (см. ProductConfiguration)
+        builder.Property<uint>("Version").IsRowVersion();
     }
 }

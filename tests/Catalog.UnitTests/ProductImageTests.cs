@@ -15,7 +15,6 @@ public class ProductImageTests
         Assert.Equal("photo.png", image.NameImage);
         Assert.Equal("/images/photo.png", image.PathImage);
         Assert.Equal(7, image.Id.Version);
-        Assert.NotNull(product.UpdatedAt);
     }
 
     [Fact]

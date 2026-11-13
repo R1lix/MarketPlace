@@ -42,5 +42,10 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         // Мягкое удаление: удалённые товары автоматически исключаются из всех запросов.
         // Для админки фильтр можно отключить через IgnoreQueryFilters()
         builder.HasQueryFilter(p => !p.IsDeleted);
+
+        // Оптимистическая блокировка: xmin — системная колонка PostgreSQL, меняется при каждом UPDATE строки.
+        // Если два запроса загрузили товар и оба сохраняют изменения, второй получит DbUpdateConcurrencyException,
+        // а не молча перезапишет первый. В домене свойства нет — это теневое (shadow) свойство EF
+        builder.Property<uint>("Version").IsRowVersion();
     }
 }

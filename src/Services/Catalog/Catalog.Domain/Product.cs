@@ -1,7 +1,8 @@
 ﻿namespace Catalog.Domain;
 
 // Товар — корень агрегата. Картинки (ProductImage) создаются и удаляются только через него.
-public sealed class Product
+// UpdatedAt заполняет инфраструктура при сохранении (UpdatedAtInterceptor), домен его не трогает.
+public sealed class Product : IAuditableEntity
 {
     // Константы для продукта
     public const int MaxNameLength = 200;
@@ -49,21 +50,18 @@ public sealed class Product
         EnsureNotDeleted();
         SetName(name);
         SetDescription(description);
-        MarkUpdated();
     }
 
     public void ChangePrice(decimal price)
     {
         EnsureNotDeleted();
         SetPrice(price);
-        MarkUpdated();
     }
 
     public void ChangeCategory(Guid categoryId)
     {
         EnsureNotDeleted();
         SetCategory(categoryId);
-        MarkUpdated();
     }
 
     // Приход товара на склад
@@ -73,7 +71,6 @@ public sealed class Product
         if (quantity <= 0)
             throw new DomainException("Количество для добавления должно быть больше нуля");
         SetStock(Stock + quantity);
-        MarkUpdated();
     }
 
     // Списание товара со склада
@@ -85,7 +82,6 @@ public sealed class Product
         if (quantity > Stock)
             throw new DomainException($"Недостаточно товара: в наличии {Stock}, запрошено {quantity}");
         SetStock(Stock - quantity);
-        MarkUpdated();
     }
 
     // Возвращает созданную картинку, чтобы API мог отдать её Id клиенту
@@ -96,7 +92,6 @@ public sealed class Product
             throw new DomainException($"У товара не может быть больше {MaxImages} картинок");
         var image = new ProductImage(Id, nameImage: nameImage, pathImage: pathImage);
         _images.Add(image);
-        MarkUpdated();
         return image;
     }
 
@@ -106,7 +101,6 @@ public sealed class Product
         var image = _images.FirstOrDefault(i => i.Id == imageId)
             ?? throw new DomainException("Картинка не найдена");
         _images.Remove(image);
-        MarkUpdated();
     }
 
     // Мягкое удаление: повторный вызов ничего не делает, товар с остатком удалить нельзя
@@ -177,13 +171,6 @@ public sealed class Product
         if (sku.Length > MaxSkuLength)
             throw new DomainException($"Длина артикула не может быть больше {MaxSkuLength} символов");
         Sku = sku;
-    }
-
-    // Время обновления вынесено в отдельный метод
-    // TODO (шаг 1.2): перенести в Infrastructure (SaveChangesInterceptor)
-    private void MarkUpdated()
-    {
-        UpdatedAt = DateTime.UtcNow;
     }
 
     private void EnsureNotDeleted()
