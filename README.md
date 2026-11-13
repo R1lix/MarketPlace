@@ -57,6 +57,14 @@ dotnet build
 dotnet test
 ```
 
+Создать или обновить таблицы в базе (применить миграции):
+
+```bash
+dotnet ef database update -p src/Services/Catalog/Catalog.Infrastructure -s src/Services/Catalog/Catalog.Api
+```
+
+Проверить, что API видит базу: запустить `Catalog.Api` и открыть `http://localhost:5203/health` (ответ `Healthy`).
+
 ## CI
 
 Workflow [`ci.yml`](.github/workflows/ci.yml) запускается на каждый push и Pull Request в `develop` и `master`: восстанавливает пакеты, собирает решение в Release (предупреждения считаются ошибками) и прогоняет тесты. Результаты — на вкладке **Actions** репозитория.
