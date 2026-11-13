@@ -44,5 +44,7 @@ jobs:
       - name: Build
         run: dotnet build Shop.sln --configuration Release --no-restore -warnaserror
 
+      # Unit-тесты и интеграционные. Интеграционные поднимают PostgreSQL через Testcontainers:
+      # Docker на раннерах ubuntu-latest уже установлен
       - name: Test
         run: dotnet test Shop.sln --configuration Release --no-build --verbosity normal

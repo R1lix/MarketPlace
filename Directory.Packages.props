@@ -26,4 +26,10 @@
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
+
+  <ItemGroup Label="Интеграционные тесты">
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.23" />
+  </ItemGroup>
 </Project>

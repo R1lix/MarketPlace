@@ -10,6 +10,7 @@
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
 | Unit-тесты Domain (xUnit) | ✅ 79 тестов |
+| Интеграционные тесты Infrastructure (Testcontainers + PostgreSQL) | ✅ 19 тестов |
 | CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
 | Catalog.Application — сценарии, DTO, валидация | ⏳ |
@@ -32,6 +33,7 @@ src/Services/Catalog/
   Catalog.Api/               HTTP API (зависит от Application и Infrastructure)
 tests/
   Catalog.UnitTests/         unit-тесты Domain (xUnit)
+  Catalog.IntegrationTests/  интеграционные тесты: настоящий PostgreSQL в Docker (Testcontainers)
 .github/workflows/ci.yml     CI: сборка и тесты на каждый push и Pull Request
 ```
 
@@ -54,7 +56,7 @@ tests/
 dotnet tool restore      # локальные инструменты (dotnet-ef)
 docker compose up -d     # PostgreSQL в Docker, нужен Docker Desktop
 dotnet build
-dotnet test
+dotnet test              # unit + интеграционные; для интеграционных нужен запущенный Docker
 ```
 
 Создать или обновить таблицы в базе (применить миграции):
