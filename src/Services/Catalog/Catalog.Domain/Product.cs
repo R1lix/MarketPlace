@@ -8,6 +8,7 @@ public sealed class Product
     public const int MaxSkuLength = 50;
     public const int MaxDescriptionLength = 2000;
     public const int MaxImages = 10;
+    public const int PriceDecimalPlaces = 2; // копейки; в БД колонка numeric(18, 2)
 
     public Guid Id { get; private set; }
     public string Name { get; private set; } = null!;
@@ -147,6 +148,9 @@ public sealed class Product
     {
         if (price < 0)
             throw new DomainException("Цена товара не может быть отрицательной");
+        // Без этой проверки 99.999 молча округлилось бы в базе до 100.00
+        if (decimal.Round(price, PriceDecimalPlaces) != price)
+            throw new DomainException($"У цены не может быть больше {PriceDecimalPlaces} знаков после запятой");
         Price = price;
     }
 

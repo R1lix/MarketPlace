@@ -66,6 +66,23 @@ public class ProductCreationTests
         Assert.Equal(0m, product.Price);
     }
 
+    [Theory]
+    [InlineData("99.99")]
+    [InlineData("100.5")]
+    [InlineData("100")]
+    public void Constructor_PriceWithUpToTwoDecimals_IsAllowed(string price)
+    {
+        var product = TestData.Product(price: decimal.Parse(price, System.Globalization.CultureInfo.InvariantCulture));
+
+        Assert.Equal(decimal.Parse(price, System.Globalization.CultureInfo.InvariantCulture), product.Price);
+    }
+
+    [Fact]
+    public void Constructor_PriceWithMoreThanTwoDecimals_Throws()
+    {
+        Assert.Throws<DomainException>(() => TestData.Product(price: 99.999m));
+    }
+
     [Fact]
     public void Constructor_NameOfMaxLength_IsAllowed()
     {

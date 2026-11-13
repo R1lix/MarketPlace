@@ -1,0 +1,30 @@
+# Локальная инфраструктура для разработки.
+# Запуск:     docker compose up -d
+# Остановка:  docker compose down        (данные сохраняются в volume)
+# Сброс БД:   docker compose down -v     (volume удаляется вместе с данными)
+
+name: marketplace
+
+services:
+  catalog-db:
+    image: postgres:17-alpine
+    container_name: marketplace-catalog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_USER: catalog
+      # Пароль только для локальной разработки. Для реальных окружений — секреты, а не файл в репозитории.
+      POSTGRES_PASSWORD: catalog_dev_password
+    ports:
+      # 5433 снаружи, потому что порт 5432 на этой машине занят локально установленным PostgreSQL
+      - "5433:5432"
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d catalog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  catalog-db-data:

@@ -9,7 +9,7 @@
 | Часть | Состояние |
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
-| Unit-тесты Domain (xUnit) | ✅ 73 теста |
+| Unit-тесты Domain (xUnit) | ✅ 78 тестов |
 | CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
 | Catalog.Application — сценарии, DTO, валидация | ⏳ |
@@ -21,7 +21,10 @@
 ```
 Shop.sln
 Directory.Build.props        общие настройки проектов: net9.0, Nullable, ImplicitUsings
+Directory.Packages.props     версии всех NuGet-пакетов (Central Package Management)
 global.json                  версия .NET SDK
+.config/dotnet-tools.json    локальные инструменты: dotnet-ef 9.0.23
+docker-compose.yml           PostgreSQL для разработки (порт 5433)
 src/Services/Catalog/
   Catalog.Domain/            сущности и бизнес-правила, без зависимостей
   Catalog.Application/       сценарии использования (зависит от Domain)
@@ -48,15 +51,24 @@ tests/
 Нужен [.NET SDK 9](https://dotnet.microsoft.com/download/dotnet/9.0) (версия 9.0.312 или новее из линейки 9.0, см. `global.json`).
 
 ```bash
+dotnet tool restore      # локальные инструменты (dotnet-ef)
+docker compose up -d     # PostgreSQL в Docker, нужен Docker Desktop
 dotnet build
 dotnet test
 ```
+
+Создать или обновить таблицы в базе (применить миграции):
+
+```bash
+dotnet ef database update -p src/Services/Catalog/Catalog.Infrastructure -s src/Services/Catalog/Catalog.Api
+```
+
+Проверить, что API видит базу: запустить `Catalog.Api` и открыть `http://localhost:5203/health` (ответ `Healthy`).
 
 ## CI
 
 Workflow [`ci.yml`](.github/workflows/ci.yml) запускается на каждый push и Pull Request в `develop` и `master`: восстанавливает пакеты, собирает решение в Release (предупреждения считаются ошибками) и прогоняет тесты. Результаты — на вкладке **Actions** репозитория.
 
-Позже для базы данных понадобится Docker Desktop: PostgreSQL будет запускаться через `docker compose up -d`.
 
 ## План
 
