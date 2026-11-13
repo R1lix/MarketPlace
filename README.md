@@ -1,5 +1,7 @@
 # MarketPlace
 
+[![CI](https://github.com/R1lix/MarketPlace/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/R1lix/MarketPlace/actions/workflows/ci.yml)
+
 Учебный бэкенд интернет-магазина на микросервисах (.NET 9). Цель проекта — отработать навыки Middle C# Developer: Clean Architecture, DDD, REST API, EF Core, взаимодействие сервисов, тестирование.
 
 ## Статус
@@ -7,6 +9,8 @@
 | Часть | Состояние |
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
+| Unit-тесты Domain (xUnit) | ✅ 73 теста |
+| CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
 | Catalog.Application — сценарии, DTO, валидация | ⏳ |
 | Catalog.Api — REST API | ⏳ |
@@ -23,6 +27,9 @@ src/Services/Catalog/
   Catalog.Application/       сценарии использования (зависит от Domain)
   Catalog.Infrastructure/    база данных (зависит от Application)
   Catalog.Api/               HTTP API (зависит от Application и Infrastructure)
+tests/
+  Catalog.UnitTests/         unit-тесты Domain (xUnit)
+.github/workflows/ci.yml     CI: сборка и тесты на каждый push и Pull Request
 ```
 
 Зависимости направлены внутрь: `Api → Infrastructure → Application → Domain`. Domain ничего не знает о базе данных и вебе.
@@ -42,7 +49,12 @@ src/Services/Catalog/
 
 ```bash
 dotnet build
+dotnet test
 ```
+
+## CI
+
+Workflow [`ci.yml`](.github/workflows/ci.yml) запускается на каждый push и Pull Request в `develop` и `master`: восстанавливает пакеты, собирает решение в Release (предупреждения считаются ошибками) и прогоняет тесты. Результаты — на вкладке **Actions** репозитория.
 
 Позже для базы данных понадобится Docker Desktop: PostgreSQL будет запускаться через `docker compose up -d`.
 
