@@ -22,7 +22,9 @@ public sealed class Product
     public bool IsDeleted { get; private set; }
 
     private readonly List<ProductImage> _images = new();
-    public IReadOnlyCollection<ProductImage> Images => _images;
+
+    // AsReadOnly: наружу отдаём обёртку, а не сам список — иначе его можно привести к List и изменить в обход AddImage
+    public IReadOnlyCollection<ProductImage> Images => _images.AsReadOnly();
 
     // Для EF Core
     private Product() { }
