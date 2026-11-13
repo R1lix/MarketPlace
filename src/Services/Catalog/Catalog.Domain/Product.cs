@@ -15,9 +15,11 @@ public sealed class Product
     private readonly List<ProductImage> _images = new List<ProductImage>();
     public IReadOnlyCollection<ProductImage> Images => _images;
 
+    // Константы для продукта
     public const int MaxNameLength = 200; 
     public const int MaxSkuLength = 50;
     public const int MaxDescriptionLength = 2000;
+    public const int MaxImages = 10;
 
     // Для EF Core
     private Product() { }
@@ -126,6 +128,20 @@ public sealed class Product
         MarkUpdated();
     }
 
+    public void AddImage(string nameImage, string pathImage)
+    {
+        EnsureNotDeleted();
+        if (_images.Count >= MaxImages)
+            throw new DomainException($"Картинок у товара не может быть больше {MaxImages}");
+        _images.Add(new ProductImage(Id, nameImage, pathImage));
+    }
+
+    public void RemoveImage()
+    {
+        var image = _images.FirstOrDefault(x => x.Id == Id);
+        _images.Remove(image);
+    }
+
     public void RemoveStock(int quantity)
     {
         EnsureNotDeleted();
@@ -148,6 +164,8 @@ public sealed class Product
     {
         if (IsDeleted)
             return;
+        if (Stock > 0)
+            throw new DomainException($"Нельзя удалить товар, на складе еще есть остаток {Stock} единиц.");       
         IsDeleted = true;
         MarkDeletedUpdateAt();
     }
