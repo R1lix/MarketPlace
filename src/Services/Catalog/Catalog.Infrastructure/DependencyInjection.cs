@@ -16,8 +16,11 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException(
                 $"Не задана строка подключения '{ConnectionStringName}' (ConnectionStrings:{ConnectionStringName})");
 
-        // DbContext регистрируется как Scoped: один экземпляр на HTTP-запрос
-        services.AddDbContext<CatalogDbContext>(options => options.UseNpgsql(connectionString));
+        // DbContext регистрируется как Scoped: один экземпляр на HTTP-запрос.
+        // snake_case — принятый в PostgreSQL стиль имён: products, product_images, is_deleted
+        services.AddDbContext<CatalogDbContext>(options => options
+            .UseNpgsql(connectionString)
+            .UseSnakeCaseNamingConvention());
 
         // Проверка «база доступна» для эндпоинта /health
         services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>("catalog-db");

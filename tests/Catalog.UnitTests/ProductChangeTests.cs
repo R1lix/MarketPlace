@@ -47,6 +47,16 @@ public class ProductChangeTests
     }
 
     [Fact]
+    public void ChangePrice_MoreThanTwoDecimals_ThrowsAndKeepsOldPrice()
+    {
+        var product = TestData.Product(price: 100m);
+
+        Assert.Throws<DomainException>(() => product.ChangePrice(99.999m));
+
+        Assert.Equal(100m, product.Price);
+    }
+
+    [Fact]
     public void ChangeCategory_ValidId_ChangesCategory()
     {
         var product = TestData.Product();

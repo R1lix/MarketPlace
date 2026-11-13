@@ -9,7 +9,7 @@
 | Часть | Состояние |
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
-| Unit-тесты Domain (xUnit) | ✅ 73 теста |
+| Unit-тесты Domain (xUnit) | ✅ 78 тестов |
 | CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
 | Catalog.Application — сценарии, DTO, валидация | ⏳ |
