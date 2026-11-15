@@ -16,8 +16,9 @@
     <Using Include="Catalog.Domain" />
   </ItemGroup>
 
+  <!-- Unit-тесты Domain и Application: ни базы, ни Docker не нужно. Domain приходит через Application -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Services\Catalog\Catalog.Domain\Catalog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Catalog\Catalog.Application\Catalog.Application.csproj" />
   </ItemGroup>
 
 </Project>

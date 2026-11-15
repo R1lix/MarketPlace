@@ -1,11 +1,43 @@
 using Catalog.Application.Abstractions;
+using Catalog.Application.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Catalog.Infrastructure.Persistence;
 
 // DbContext уже является Unit of Work: он копит изменения и сохраняет их одной транзакцией.
-// Эта обёртка скрывает EF от Application. В блоке A2 здесь же ошибки EF будут переводиться в ошибки приложения
+// Эта обёртка скрывает EF от Application и переводит ошибки базы в ошибки приложения,
+// чтобы API мог ответить 409 Conflict, ничего не зная про EF и коды PostgreSQL
 internal sealed class UnitOfWork(CatalogDbContext db) : IUnitOfWork
 {
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        await db.SaveChangesAsync(cancellationToken);
+    // Понятные сообщения для известных ограничений базы (имена — из миграций)
+    private static readonly Dictionary<string, string> ConstraintMessages = new()
+    {
+        ["ix_products_sku"] = "Товар с таким артикулом уже существует",
+        ["fk_products_categories_category_id"] = "Категория не существует или в ней есть товары",
+    };
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            // Проверка xmin: строку успел изменить другой запрос
+            throw new ConcurrencyConflictException(exception);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ForeignKeyViolation
+        } postgres)
+        {
+            var message = postgres.ConstraintName is not null && ConstraintMessages.TryGetValue(postgres.ConstraintName, out var known)
+                ? known
+                : "Изменение противоречит данным в базе";
+            throw new ConflictException(message, exception);
+        }
+        // Остальные ошибки (база недоступна, ошибка в SQL) — не конфликт, а сбой: пусть станут 500
+    }
 }

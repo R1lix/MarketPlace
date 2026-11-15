@@ -9,11 +9,11 @@
 | Часть | Состояние |
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
-| Unit-тесты Domain (xUnit) | ✅ 79 тестов |
-| Интеграционные тесты Infrastructure (Testcontainers + PostgreSQL) | ✅ 26 тестов |
+| Unit-тесты Domain и Application (xUnit) | ✅ 81 тест |
+| Интеграционные тесты Infrastructure (Testcontainers + PostgreSQL) | ✅ 30 тестов |
 | CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
-| Catalog.Application — сценарии, DTO, валидация | 🔨 в работе: репозитории и Unit of Work |
+| Catalog.Application — сценарии, DTO, валидация | 🔨 в работе: репозитории, Unit of Work, ошибки приложения |
 | Catalog.Api — REST API | ⏳ |
 | Остальные сервисы (Identity, Orders, Inventory, Payment, Notifications) | 🗓 запланировано |
 
@@ -32,7 +32,7 @@ src/Services/Catalog/
   Catalog.Infrastructure/    база данных (зависит от Application)
   Catalog.Api/               HTTP API (зависит от Application и Infrastructure)
 tests/
-  Catalog.UnitTests/         unit-тесты Domain (xUnit)
+  Catalog.UnitTests/         unit-тесты Domain и Application (xUnit, без базы)
   Catalog.IntegrationTests/  интеграционные тесты: настоящий PostgreSQL в Docker (Testcontainers)
 .github/workflows/ci.yml     CI: сборка и тесты на каждый push и Pull Request
 ```
