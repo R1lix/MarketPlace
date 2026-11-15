@@ -1,5 +1,7 @@
+using Catalog.Application.Abstractions;
 using Catalog.Infrastructure.Persistence;
 using Catalog.Infrastructure.Persistence.Interceptors;
+using Catalog.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,12 @@ public static class DependencyInjection
             .UseNpgsql(connectionString)
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(serviceProvider.GetRequiredService<UpdatedAtInterceptor>()));
+
+        // Репозитории и Unit of Work — Scoped, как и DbContext: внутри одного запроса все они
+        // работают с одним и тем же DbContext, поэтому SaveChangesAsync сохраняет изменения всех репозиториев разом
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Проверка «база доступна» для эндпоинта /health
         services.AddHealthChecks().AddDbContextCheck<CatalogDbContext>("catalog-db");

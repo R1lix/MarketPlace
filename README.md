@@ -10,10 +10,10 @@
 |---|---|
 | Catalog.Domain — сущности и бизнес-правила | ✅ готово |
 | Unit-тесты Domain (xUnit) | ✅ 79 тестов |
-| Интеграционные тесты Infrastructure (Testcontainers + PostgreSQL) | ✅ 19 тестов |
+| Интеграционные тесты Infrastructure (Testcontainers + PostgreSQL) | ✅ 26 тестов |
 | CI — сборка и тесты в GitHub Actions | ✅ |
 | Catalog.Infrastructure — PostgreSQL, EF Core | ⏳ следующий шаг |
-| Catalog.Application — сценарии, DTO, валидация | ⏳ |
+| Catalog.Application — сценарии, DTO, валидация | 🔨 в работе: репозитории и Unit of Work |
 | Catalog.Api — REST API | ⏳ |
 | Остальные сервисы (Identity, Orders, Inventory, Payment, Notifications) | 🗓 запланировано |
 
