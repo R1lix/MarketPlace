@@ -17,6 +17,13 @@ internal sealed class UnitOfWork(CatalogDbContext db) : IUnitOfWork
         ["fk_products_categories_category_id"] = "Категория не существует или в ней есть товары",
     };
 
+    // Ограничения, нарушить которые можно только одновременными изменениями: внутри агрегата их
+    // соблюдает домен. Например, два запроса добавили картинку и оба назначили ей одну и ту же позицию
+    private static readonly HashSet<string> ConcurrencyConstraints =
+    [
+        "ix_product_images_product_id_position",
+    ];
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -33,7 +40,10 @@ internal sealed class UnitOfWork(CatalogDbContext db) : IUnitOfWork
             SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ForeignKeyViolation
         } postgres)
         {
-            var message = postgres.ConstraintName is not null && ConstraintMessages.TryGetValue(postgres.ConstraintName, out var known)
+            if (postgres.ConstraintName is not null && ConcurrencyConstraints.Contains(postgres.ConstraintName))
+                throw new ConcurrencyConflictException(exception);
+
+            var message =postgres.ConstraintName is not null && ConstraintMessages.TryGetValue(postgres.ConstraintName, out var known)
                 ? known
                 : "Изменение противоречит данным в базе";
             throw new ConflictException(message, exception);

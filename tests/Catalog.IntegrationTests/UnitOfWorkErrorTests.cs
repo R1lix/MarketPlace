@@ -70,4 +70,24 @@ public class UnitOfWorkErrorTests(PostgresFixture fixture) : IntegrationTestBase
         var exception = await Assert.ThrowsAsync<ConcurrencyConflictException>(() => second.UnitOfWork.SaveChangesAsync());
         Assert.IsAssignableFrom<ConflictException>(exception); // для API это тоже 409
     }
+
+    // Гонка двух AddImage: какой бы защитой её ни поймала база (xmin или индекс позиций),
+    // клиент получает одну и ту же понятную ошибку «данные изменены другим запросом»
+    [Fact]
+    public async Task ConcurrentAddImage_BecomesConcurrencyConflict()
+    {
+        var (_, product) = await SaveProduct(images: 2);
+        await using var scope1 = Fixture.CreateScope();
+        await using var scope2 = Fixture.CreateScope();
+        var first = Resolve(scope1);
+        var second = Resolve(scope2);
+        var p1 = await first.Products.GetByIdAsync(product.Id);
+        var p2 = await second.Products.GetByIdAsync(product.Id);
+
+        p1!.AddImage("a.png", "/images/a.png");
+        await first.UnitOfWork.SaveChangesAsync();
+        p2!.AddImage("b.png", "/images/b.png");
+
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(() => second.UnitOfWork.SaveChangesAsync());
+    }
 }

@@ -15,6 +15,28 @@ public class ProductImageTests
         Assert.Equal("photo.png", image.NameImage);
         Assert.Equal("/images/photo.png", image.PathImage);
         Assert.Equal(7, image.Id.Version);
+        Assert.Equal(0, image.Position);
+    }
+
+    [Fact]
+    public void AddImage_AssignsIncreasingPositions()
+    {
+        var product = TestData.ProductWithImages(3);
+
+        Assert.Equal([0, 1, 2], product.Images.Select(i => i.Position));
+    }
+
+    // После удаления позиции не сдвигаются, но новая картинка не должна занять уже занятую позицию
+    [Fact]
+    public void AddImage_AfterRemove_TakesNextFreePosition()
+    {
+        var product = TestData.ProductWithImages(3);
+        product.RemoveImage(product.Images.First(i => i.Position == 0).Id);
+
+        var image = product.AddImage("new.png", "/images/new.png");
+
+        Assert.Equal(3, image.Position);
+        Assert.Equal(product.Images.Count, product.Images.Select(i => i.Position).Distinct().Count());
     }
 
     [Fact]

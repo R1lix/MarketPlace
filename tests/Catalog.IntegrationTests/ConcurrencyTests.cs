@@ -46,9 +46,29 @@ public class ConcurrencyTests(PostgresFixture fixture) : IntegrationTestBase(fix
         p2.AddImage("b1.png", "/images/b1.png");
         p2.AddImage("b2.png", "/images/b2.png");
 
-        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => db2.SaveChangesAsync());
+        // Защиты две, и первой срабатывает любая: уникальный индекс (товар, позиция) — оба запроса
+        // назначили картинкам позиции 8 и 9 — или проверка xmin товара. Важен результат: второй запрос
+        // отклонён, лимит не превышен. Как UnitOfWork переводит оба случая — см. UnitOfWorkErrorTests
+        await Assert.ThrowsAnyAsync<DbUpdateException>(() => db2.SaveChangesAsync());
         var count = await InDb(db => db.Set<ProductImage>().CountAsync(i => i.ProductId == product.Id));
         Assert.Equal(Product.MaxImages, count);
+    }
+
+    // Уникальный индекс позиций — вторая линия защиты: даже если xmin не сработает
+    // (например, товар не «тронут»), две картинки не получат одну позицию
+    [Fact]
+    public async Task DuplicateImagePosition_IsRejectedByDatabase()
+    {
+        var (_, product) = await SaveProduct(images: 1);
+
+        // Сырой SQL в обход домена (как если бы ошибка была в коде). Без SaveChanges EF не оборачивает
+        // ошибку в DbUpdateException, поэтому приходит исключение драйвера PostgreSQL
+        var exception = await Assert.ThrowsAsync<Npgsql.PostgresException>(() => InDb(db =>
+            db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO product_images (id, product_id, name_image, path_image, position) VALUES ({0}, {1}, 'x.png', '/x', 0)",
+                Guid.NewGuid(), product.Id)));
+
+        Assert.Equal("ix_product_images_product_id_position", exception.ConstraintName);
     }
 
     [Fact]

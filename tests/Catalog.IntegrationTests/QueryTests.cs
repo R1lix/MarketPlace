@@ -46,8 +46,21 @@ public class QueryTests(PostgresFixture fixture) : IntegrationTestBase(fixture)
         Assert.Equal(product.Name, dto.Name);
         Assert.Equal(99.90m, dto.Price);
         Assert.Equal(category.Name, dto.CategoryName);
-        Assert.Equal(product.Images.Select(i => i.Id), dto.Images.Select(i => i.Id)); // в порядке добавления
-        Assert.Equal("img0.png", dto.Images[0].Name);
+        Assert.Equal(["img0.png", "img1.png"], dto.Images.Select(i => i.Name));
+    }
+
+    // Регрессия: раньше картинки сортировались по Id, а Guid v7, созданные в одну миллисекунду,
+    // идут в случайном порядке — тест падал примерно в половине запусков (так он и упал в CI).
+    // С 10 картинками случайное совпадение порядка практически невозможно
+    [Fact]
+    public async Task GetById_ImagesAreInOrderOfAdding()
+    {
+        var (_, product) = await SaveProduct(images: Product.MaxImages);
+
+        var dto = await Query((products, _) => products.GetByIdAsync(product.Id));
+
+        var expected = Enumerable.Range(0, Product.MaxImages).Select(i => $"img{i}.png");
+        Assert.Equal(expected, dto!.Images.Select(i => i.Name));
     }
 
     [Fact]

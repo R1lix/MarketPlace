@@ -136,6 +136,10 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("path_image");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid")
                         .HasColumnName("product_id");
@@ -143,8 +147,9 @@ namespace Catalog.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_product_images");
 
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_product_images_product_id");
+                    b.HasIndex("ProductId", "Position")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_images_product_id_position");
 
                     b.ToTable("product_images", (string)null);
                 });

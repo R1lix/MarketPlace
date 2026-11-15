@@ -90,7 +90,10 @@ public sealed class Product : IAuditableEntity
         EnsureNotDeleted();
         if (_images.Count >= MaxImages)
             throw new DomainException($"У товара не может быть больше {MaxImages} картинок");
-        var image = new ProductImage(Id, nameImage: nameImage, pathImage: pathImage);
+        // Новая картинка — в конец. После удаления позиции не сдвигаются (возможны пропуски),
+        // но порядок сохраняется, а дубликатов не будет
+        var position = _images.Count == 0 ? 0 : _images.Max(i => i.Position) + 1;
+        var image = new ProductImage(Id, nameImage: nameImage, pathImage: pathImage, position: position);
         _images.Add(image);
         return image;
     }

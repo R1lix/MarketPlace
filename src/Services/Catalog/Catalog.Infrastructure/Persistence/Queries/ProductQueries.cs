@@ -26,9 +26,9 @@ internal sealed class ProductQueries(CatalogDbContext db) : IProductQueries
                 db.Categories.Where(c => c.Id == p.CategoryId).Select(c => c.Name).Single(),
                 p.CreatedAt,
                 p.UpdatedAt,
-                // Id картинок — Guid v7, поэтому сортировка по Id = порядок добавления
+                // По позиции, которую назначает домен (по Id нельзя: Guid v7 в одну миллисекунду идут в случайном порядке)
                 p.Images
-                    .OrderBy(i => i.Id)
+                    .OrderBy(i => i.Position)
                     .Select(i => new ProductImageDto(i.Id, i.NameImage, i.PathImage))
                     .ToList()))
             .SingleOrDefaultAsync(cancellationToken);
