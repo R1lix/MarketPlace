@@ -17,18 +17,16 @@ public static class DependencyInjection
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionStringName)
-            ?? throw new InvalidOperationException(
-                $"Не задана строка подключения '{ConnectionStringName}' (ConnectionStrings:{ConnectionStringName})");
-
         // Источник текущего времени. TryAdd — чтобы тесты могли подменить его своим «замороженным» временем
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<UpdatedAtInterceptor>();
 
         // DbContext регистрируется как Scoped: один экземпляр на HTTP-запрос.
-        // snake_case — принятый в PostgreSQL стиль имён: products, product_images, is_deleted
+        // snake_case — принятый в PostgreSQL стиль имён: products, product_images, is_deleted.
+        // Строка подключения читается при создании DbContext, а не здесь: к этому моменту конфигурация
+        // окончательная, в том числе подменённая в тестах API (WebApplicationFactory)
         services.AddDbContext<CatalogDbContext>((serviceProvider, options) => options
-            .UseNpgsql(connectionString)
+            .UseNpgsql(GetConnectionString(serviceProvider.GetService<IConfiguration>() ?? configuration))
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(serviceProvider.GetRequiredService<UpdatedAtInterceptor>()));
 
@@ -47,4 +45,9 @@ public static class DependencyInjection
 
         return services;
     }
+
+    private static string GetConnectionString(IConfiguration configuration) =>
+        configuration.GetConnectionString(ConnectionStringName)
+        ?? throw new InvalidOperationException(
+            $"Не задана строка подключения '{ConnectionStringName}' (ConnectionStrings:{ConnectionStringName})");
 }

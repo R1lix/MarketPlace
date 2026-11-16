@@ -1,8 +1,95 @@
-@Catalog.Api_HostAddress = http://localhost:5203
+# Запросы к Catalog API. В Visual Studio: «Send request» над каждым запросом.
+# Перед запуском: docker compose up -d, затем запустить Catalog.Api (профиль http).
+# Интерактивная документация: http://localhost:5203/swagger
 
-# Проверка: приложение запущено и база доступна (200 Healthy / 503 Unhealthy)
-GET {{Catalog.Api_HostAddress}}/health
+@host = http://localhost:5203
+
+### Здоровье: 200 Healthy — приложение и база работают
+GET {{host}}/health
+
+### ---------- Категории ----------
+
+### Создать категорию → 201 + Location. Скопируйте "id" из ответа в @categoryId ниже
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Смартфоны" }
 
 ###
+@categoryId = 00000000-0000-0000-0000-000000000000
 
-# Запросы к товарам появятся на шаге 1.4 (Api): GET/POST/PUT/DELETE /api/products
+### Все категории
+GET {{host}}/api/categories
+
+### Переименовать → 204
+PUT {{host}}/api/categories/{{categoryId}}
+Content-Type: application/json
+
+{ "name": "Телефоны" }
+
+### ---------- Товары ----------
+
+### Создать товар → 201 + Location. Скопируйте "id" в @productId ниже
+POST {{host}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Телефон X",
+  "description": "Хороший телефон",
+  "price": 19990.00,
+  "stock": 5,
+  "categoryId": "{{categoryId}}",
+  "sku": "phone-x-001"
+}
+
+###
+@productId = 00000000-0000-0000-0000-000000000000
+
+### Карточка товара
+GET {{host}}/api/products/{{productId}}
+
+### Список: страница, фильтр по категории, поиск по названию и артикулу
+GET {{host}}/api/products?page=1&pageSize=20&categoryId={{categoryId}}&search=телефон
+
+### Изменить карточку (название, описание, цена, категория) → 204
+PUT {{host}}/api/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Телефон X Pro",
+  "description": "Ещё лучше",
+  "price": 24990.00,
+  "categoryId": "{{categoryId}}"
+}
+
+### Приход на склад → 204
+POST {{host}}/api/products/{{productId}}/stock/add
+Content-Type: application/json
+
+{ "quantity": 10 }
+
+### Списание со склада → 204 (больше, чем есть → 400)
+POST {{host}}/api/products/{{productId}}/stock/remove
+Content-Type: application/json
+
+{ "quantity": 3 }
+
+### Добавить картинку → 201
+POST {{host}}/api/products/{{productId}}/images
+Content-Type: application/json
+
+{ "name": "front.png", "path": "/images/phone-x/front.png" }
+
+### Удалить картинку → 204 (подставьте id картинки из карточки товара)
+DELETE {{host}}/api/products/{{productId}}/images/00000000-0000-0000-0000-000000000000
+
+### Удалить товар → 204 (с остатком на складе → 400, повторно → 404)
+DELETE {{host}}/api/products/{{productId}}
+
+### ---------- Ошибки ----------
+
+### Неверный формат → 400 с ошибками по полям
+POST {{host}}/api/products
+Content-Type: application/json
+
+{ "name": "", "price": -1, "stock": -1, "sku": "" }

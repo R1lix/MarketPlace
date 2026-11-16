@@ -1,5 +1,7 @@
 using Catalog.Application;
 using Catalog.Infrastructure;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
@@ -43,8 +45,24 @@ public sealed class PostgresFixture : IAsyncLifetime
     // Каждый вызов — отдельный DbContext, как отдельный HTTP-запрос
     public AsyncServiceScope CreateScope() => _services.CreateAsyncScope();
 
+    // Настоящее приложение Catalog.Api в памяти, подключённое к этому же контейнеру.
+    // Создаётся один раз при первом обращении: старт приложения не бесплатный
+    private WebApplicationFactory<Program>? _api;
+
+    public HttpClient CreateApiClient()
+    {
+        _api ??= new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder
+            .UseEnvironment("Development")
+            .UseSetting(
+                $"ConnectionStrings:{Catalog.Infrastructure.DependencyInjection.ConnectionStringName}",
+                _container.GetConnectionString()));
+        return _api.CreateClient();
+    }
+
     public async Task DisposeAsync()
     {
+        if (_api is not null)
+            await _api.DisposeAsync();
         await _services.DisposeAsync();
         await _container.DisposeAsync();
     }
