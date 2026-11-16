@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Catalog.Domain\Catalog.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- Сервисы internal: снаружи их получают только через интерфейсы из DI. Unit-тестам нужно создавать их напрямую -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Catalog.UnitTests" />
   </ItemGroup>
 
 </Project>

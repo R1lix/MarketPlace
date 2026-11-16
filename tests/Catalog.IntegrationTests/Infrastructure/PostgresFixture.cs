@@ -1,3 +1,4 @@
+using Catalog.Application;
 using Catalog.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,13 +26,14 @@ public sealed class PostgresFixture : IAsyncLifetime
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                [$"ConnectionStrings:{DependencyInjection.ConnectionStringName}"] = _container.GetConnectionString(),
+                [$"ConnectionStrings:{Catalog.Infrastructure.DependencyInjection.ConnectionStringName}"] = _container.GetConnectionString(),
             })
             .Build();
 
         var services = new ServiceCollection();
         services.AddSingleton<TimeProvider>(Time);   // регистрируется раньше — AddInfrastructure его не перезапишет
-        services.AddInfrastructure(configuration);     // та же регистрация, что в настоящем приложении
+        services.AddApplication();                     // та же регистрация, что в настоящем приложении
+        services.AddInfrastructure(configuration);
         _services = services.BuildServiceProvider();
 
         await using var scope = _services.CreateAsyncScope();
