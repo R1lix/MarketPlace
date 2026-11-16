@@ -11,13 +11,21 @@ public sealed class ProductImage
     public string PathImage { get; private set; } = null!;
     public string NameImage { get; private set; } = null!;
 
+    // Порядок показа картинки у товара: 0 — первая. Назначает Product.
+    // Порядок по Id не годится: Guid v7 упорядочены только с точностью до миллисекунды,
+    // а картинки, добавленные в одну миллисекунду, по Id идут в случайном порядке
+    public int Position { get; private set; }
+
     // Для EF Core
     private ProductImage() { }
 
-    internal ProductImage(Guid productId, string nameImage, string pathImage)
+    internal ProductImage(Guid productId, string nameImage, string pathImage, int position)
     {
+        if (position < 0)
+            throw new DomainException("Позиция картинки не может быть отрицательной");
         Id = Guid.CreateVersion7();
         ProductId = productId;
+        Position = position;
         SetPath(pathImage);
         SetName(nameImage);
     }

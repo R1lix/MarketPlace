@@ -44,5 +44,21 @@ jobs:
       - name: Build
         run: dotnet build Shop.sln --configuration Release --no-restore -warnaserror
 
+      # Unit-тесты и интеграционные. Интеграционные поднимают PostgreSQL через Testcontainers:
+      # Docker на раннерах ubuntu-latest уже установлен
       - name: Test
         run: dotnet test Shop.sln --configuration Release --no-build --verbosity normal
+
+  # Проверка, что Docker-образ Catalog API собирается. Образ никуда не публикуется —
+  # публикация в GitHub Container Registry (CD) появится, когда будет куда его разворачивать
+  docker-image:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build Catalog API image
+        run: docker build --file src/Services/Catalog/Catalog.Api/Dockerfile --tag marketplace/catalog-api:ci .

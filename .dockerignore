@@ -1,0 +1,13 @@
+# В контекст сборки Docker отправляем только то, что нужно для сборки API
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+.git/
+.github/
+.config/
+tests/
+PLAN.md
+README.md
+docker-compose.yml
+**/Dockerfile

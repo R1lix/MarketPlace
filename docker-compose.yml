@@ -1,7 +1,11 @@
 # Локальная инфраструктура для разработки.
-# Запуск:     docker compose up -d
-# Остановка:  docker compose down        (данные сохраняются в volume)
-# Сброс БД:   docker compose down -v     (volume удаляется вместе с данными)
+#
+# Только база (API запускается из Visual Studio / dotnet run):
+#   docker compose up -d
+# Весь backend — база + Catalog API в контейнере (http://localhost:5080/swagger):
+#   docker compose --profile api up -d --build
+# Остановка:  docker compose --profile api down        (данные сохраняются в volume)
+# Сброс БД:   docker compose --profile api down -v     (volume удаляется вместе с данными)
 
 name: marketplace
 
@@ -25,6 +29,28 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  catalog-api:
+    # Профиль api: без --profile api этот сервис не запускается, и обычный «docker compose up -d» поднимает только базу
+    profiles: ["api"]
+    build:
+      context: .
+      dockerfile: src/Services/Catalog/Catalog.Api/Dockerfile
+    image: marketplace/catalog-api:dev
+    container_name: marketplace-catalog-api
+    restart: unless-stopped
+    environment:
+      # Development: включены Swagger UI и подробные логи
+      ASPNETCORE_ENVIRONMENT: Development
+      # Внутри сети Docker база доступна по имени сервиса и своему порту 5432
+      ConnectionStrings__CatalogDb: "Host=catalog-db;Port=5432;Database=catalog;Username=catalog;Password=catalog_dev_password"
+      # Здесь миграции применяются при старте — отдельно запускать dotnet ef не нужно
+      Database__MigrateOnStartup: "true"
+    ports:
+      - "5080:8080"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
 
 volumes:
   catalog-db-data:

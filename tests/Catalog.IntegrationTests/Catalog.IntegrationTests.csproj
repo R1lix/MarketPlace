@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Интеграционные тесты: настоящий PostgreSQL в Docker (Testcontainers). Нужен запущенный Docker -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Catalog.Domain" />
+    <Using Include="Catalog.Infrastructure.Persistence" />
+    <Using Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Catalog\Catalog.Infrastructure\Catalog.Infrastructure.csproj" />
+    <!-- Тесты HTTP-уровня: приложение целиком через WebApplicationFactory -->
+    <ProjectReference Include="..\..\src\Services\Catalog\Catalog.Api\Catalog.Api.csproj" />
+  </ItemGroup>
+
+</Project>

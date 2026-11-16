@@ -11,7 +11,23 @@ public class ProductChangeTests
 
         Assert.Equal("Смартфон", product.Name);
         Assert.Equal("Новое описание", product.Description);
-        Assert.NotNull(product.UpdatedAt);
+    }
+
+    // UpdatedAt проставляет инфраструктура при сохранении (UpdatedAtInterceptor), а не сам домен.
+    // Если кто-то вернёт заполнение в домен, тест подскажет, что решение было другим
+    [Fact]
+    public void BusinessMethods_DoNotSetUpdatedAt()
+    {
+        var product = TestData.Product(stock: 5);
+
+        product.ChangeDetails("Смартфон", null);
+        product.ChangePrice(1m);
+        product.ChangeCategory(Guid.NewGuid());
+        product.AddStock(1);
+        product.RemoveStock(1);
+        product.AddImage("a.png", "/images/a.png");
+
+        Assert.Null(product.UpdatedAt);
     }
 
     [Fact]
@@ -22,7 +38,6 @@ public class ProductChangeTests
         Assert.Throws<DomainException>(() => product.ChangeDetails("", "Описание"));
 
         Assert.Equal("Телефон", product.Name);
-        Assert.Null(product.UpdatedAt);
     }
 
     [Fact]
@@ -33,7 +48,6 @@ public class ProductChangeTests
         product.ChangePrice(250m);
 
         Assert.Equal(250m, product.Price);
-        Assert.NotNull(product.UpdatedAt);
     }
 
     [Fact]
@@ -65,7 +79,6 @@ public class ProductChangeTests
         product.ChangeCategory(newCategoryId);
 
         Assert.Equal(newCategoryId, product.CategoryId);
-        Assert.NotNull(product.UpdatedAt);
     }
 
     [Fact]

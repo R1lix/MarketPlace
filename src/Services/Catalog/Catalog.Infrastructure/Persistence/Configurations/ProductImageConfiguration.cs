@@ -18,6 +18,10 @@ internal sealed class ProductImageConfiguration : IEntityTypeConfiguration<Produ
         builder.Property(i => i.NameImage).HasMaxLength(ProductImage.MaxNameImageLength).IsRequired();
         builder.Property(i => i.PathImage).HasMaxLength(ProductImage.MaxPathImageLength).IsRequired();
 
+        // У одного товара две картинки не могут занимать одну позицию.
+        // Индекс начинается с product_id, поэтому заодно ускоряет загрузку картинок товара
+        builder.HasIndex(i => new { i.ProductId, i.Position }).IsUnique();
+
         // Связь с Product (внешний ключ, каскадное удаление) настроена в ProductConfiguration
     }
 }

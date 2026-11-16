@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Только интерактивная страница /swagger; само описание API строит Microsoft.AspNetCore.OpenApi -->
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <!-- Нужен только инструменту dotnet ef для миграций; в итоговое приложение не попадает -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
@@ -12,10 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Catalog.Application\Catalog.Application.csproj" />
     <ProjectReference Include="..\Catalog.Infrastructure\Catalog.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

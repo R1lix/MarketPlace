@@ -10,7 +10,6 @@ public class ProductStockTests
         product.AddStock(5);
 
         Assert.Equal(15, product.Stock);
-        Assert.NotNull(product.UpdatedAt);
     }
 
     [Theory]
@@ -33,7 +32,6 @@ public class ProductStockTests
         product.RemoveStock(3);
 
         Assert.Equal(7, product.Stock);
-        Assert.NotNull(product.UpdatedAt);
     }
 
     [Fact]
