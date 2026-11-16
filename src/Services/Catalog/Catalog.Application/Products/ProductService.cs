@@ -1,23 +1,28 @@
 using Catalog.Application.Abstractions;
 using Catalog.Application.Common;
 using Catalog.Application.Exceptions;
+using Catalog.Application.Validation;
 using Catalog.Domain;
 
 namespace Catalog.Application.Products;
 
 // Оркестрация: загрузить агрегат → вызвать метод домена (он проверяет правила) → сохранить.
 // Здесь только то, чего домен сам знать не может: существует ли категория, свободен ли артикул.
+// Первым делом — проверка формата запроса (валидатор): все ошибки по полям сразу, до обращения к базе.
 // Ошибки: NotFoundException → 404, ValidationException / DomainException → 400, ConflictException → 409
 internal sealed class ProductService(
     IProductRepository products,
     ICategoryRepository categories,
     IProductQueries queries,
-    IUnitOfWork unitOfWork) : IProductService
+    IUnitOfWork unitOfWork,
+    IRequestValidator validator) : IProductService
 {
     private const string ProductEntity = "Товар";
 
     public async Task<ProductDto> CreateAsync(CreateProductRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
+
         var category = await categories.GetByIdAsync(request.CategoryId, cancellationToken)
             ?? throw new ValidationException(nameof(request.CategoryId), "Категория не существует");
 
@@ -40,11 +45,15 @@ internal sealed class ProductService(
         await queries.GetByIdAsync(id, cancellationToken)
         ?? throw new NotFoundException(ProductEntity, id);
 
-    public Task<PagedResult<ProductSummaryDto>> GetPageAsync(ProductListQuery query, CancellationToken cancellationToken = default) =>
-        queries.GetPageAsync(query, cancellationToken);
+    public async Task<PagedResult<ProductSummaryDto>> GetPageAsync(ProductListQuery query, CancellationToken cancellationToken = default)
+    {
+        await validator.ValidateAsync(query, cancellationToken);
+        return await queries.GetPageAsync(query, cancellationToken);
+    }
 
     public async Task UpdateAsync(Guid id, UpdateProductRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var product = await GetProductAsync(id, cancellationToken);
 
         // Существование категории проверяем, только если её меняют
@@ -61,6 +70,7 @@ internal sealed class ProductService(
 
     public async Task AddStockAsync(Guid id, ChangeStockRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var product = await GetProductAsync(id, cancellationToken);
         product.AddStock(request.Quantity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -68,6 +78,7 @@ internal sealed class ProductService(
 
     public async Task RemoveStockAsync(Guid id, ChangeStockRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var product = await GetProductAsync(id, cancellationToken);
         product.RemoveStock(request.Quantity);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -75,6 +86,7 @@ internal sealed class ProductService(
 
     public async Task<ProductImageDto> AddImageAsync(Guid id, AddProductImageRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var product = await GetProductAsync(id, cancellationToken);
         var image = product.AddImage(request.Name, request.Path);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -12,7 +12,7 @@ public class CategoryServiceTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly CategoryService _service;
 
-    public CategoryServiceTests() => _service = new CategoryService(_categories, _queries, _unitOfWork);
+    public CategoryServiceTests() => _service = new CategoryService(_categories, _queries, _unitOfWork, TestValidation.Validator);
 
     private Category Existing(string name = "Смартфоны")
     {
@@ -32,9 +32,11 @@ public class CategoryServiceTests
     }
 
     [Fact]
-    public async Task Create_EmptyName_DomainThrowsAndNothingIsSaved()
+    public async Task Create_EmptyName_ThrowsValidationAndNothingIsSaved()
     {
-        await Assert.ThrowsAsync<DomainException>(() => _service.CreateAsync(new CreateCategoryRequest(" ")));
+        var exception = await Assert.ThrowsAsync<ValidationException>(() => _service.CreateAsync(new CreateCategoryRequest(" ")));
+
+        Assert.True(exception.Errors.ContainsKey("Name"));
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }

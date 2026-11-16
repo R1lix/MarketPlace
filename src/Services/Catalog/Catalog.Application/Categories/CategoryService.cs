@@ -1,5 +1,6 @@
 using Catalog.Application.Abstractions;
 using Catalog.Application.Exceptions;
+using Catalog.Application.Validation;
 using Catalog.Domain;
 
 namespace Catalog.Application.Categories;
@@ -7,12 +8,14 @@ namespace Catalog.Application.Categories;
 internal sealed class CategoryService(
     ICategoryRepository categories,
     ICategoryQueries queries,
-    IUnitOfWork unitOfWork) : ICategoryService
+    IUnitOfWork unitOfWork,
+    IRequestValidator validator) : ICategoryService
 {
     private const string CategoryEntity = "Категория";
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var category = new Category(request.Name);
         categories.Add(category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -28,6 +31,7 @@ internal sealed class CategoryService(
 
     public async Task RenameAsync(Guid id, RenameCategoryRequest request, CancellationToken cancellationToken = default)
     {
+        await validator.ValidateAsync(request, cancellationToken);
         var category = await GetCategoryAsync(id, cancellationToken);
         category.Rename(request.Name);
         await unitOfWork.SaveChangesAsync(cancellationToken);

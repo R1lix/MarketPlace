@@ -19,7 +19,7 @@ public class ProductServiceTests
 
     public ProductServiceTests()
     {
-        _service = new ProductService(_products, _categories, _queries, _unitOfWork);
+        _service = new ProductService(_products, _categories, _queries, _unitOfWork, TestValidation.Validator);
         _categories.GetByIdAsync(_category.Id, Arg.Any<CancellationToken>()).Returns(_category);
         _categories.ExistsAsync(_category.Id, Arg.Any<CancellationToken>()).Returns(true);
     }
@@ -77,14 +77,48 @@ public class ProductServiceTests
         await AssertNotSaved();
     }
 
+    // Формат проверяется первым: все ошибки сразу, и ни одного обращения к базе
     [Fact]
-    public async Task Create_InvalidData_DomainThrowsAndNothingIsSaved()
+    public async Task Create_InvalidFormat_ReturnsAllErrorsAndDoesNotTouchDatabase()
     {
-        var request = ValidCreate() with { Price = -1m };
+        var request = new CreateProductRequest("", null, -1m, -5, Guid.Empty, "");
 
-        await Assert.ThrowsAsync<DomainException>(() => _service.CreateAsync(request));
+        var exception = await Assert.ThrowsAsync<ValidationException>(() => _service.CreateAsync(request));
 
+        Assert.Equal(
+            ["CategoryId", "Name", "Price", "Sku", "Stock"],
+            exception.Errors.Keys.Order());
+        await _categories.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _products.DidNotReceive().SkuExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await AssertNotSaved();
+    }
+
+    // Валидатор пропускает формат, но бизнес-правила остаются за доменом:
+    // «списать больше, чем есть» валидатор знать не может — это решает Product
+    [Fact]
+    public async Task RemoveStock_ValidFormatButBusinessRuleViolated_DomainThrows()
+    {
+        var product = ExistingProduct(stock: 1);
+
+        await Assert.ThrowsAsync<DomainException>(() => _service.RemoveStockAsync(product.Id, new ChangeStockRequest(2)));
+    }
+
+    [Fact]
+    public async Task AddStock_NotPositiveQuantity_ThrowsValidationBeforeLoadingProduct()
+    {
+        await Assert.ThrowsAsync<ValidationException>(() => _service.AddStockAsync(Guid.NewGuid(), new ChangeStockRequest(0)));
+
+        await _products.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetPage_InvalidPaging_ThrowsValidationWithoutQuerying()
+    {
+        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.GetPageAsync(new ProductListQuery(Page: 0, PageSize: 1000)));
+
+        Assert.Equal(["Page", "PageSize"], exception.Errors.Keys.Order());
+        await _queries.DidNotReceive().GetPageAsync(Arg.Any<ProductListQuery>(), Arg.Any<CancellationToken>());
     }
 
     // ----- Get -----
